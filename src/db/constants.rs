@@ -1,0 +1,32 @@
+#[macro_export]
+macro_rules! CREATE_TAG {
+    () => (r#"
+CREATE TABLE IF NOT EXISTS ATAG_TAG (
+  ID INTEGER PRIMARY KEY,
+  UNIQUE_TAG VARCHAR(255) NOT NULL,
+  URL_FROM VARCHAR(1024) NOT NULL,
+  REFERER VARCHAR(1024) NOT NULL,
+  HEADERS CLOB
+)
+"#)
+}
+
+#[macro_export]
+macro_rules! INSERT_TAG {
+    () => (r#"
+INSERT INTO ATAG_TAG (
+  UNIQUE_TAG, URL_FROM, REFERER, HEADERS)
+VALUES('{unique_tag}', '{url_from}', '{referer}', '{headers}')
+"#)
+}
+
+macro_rules! TMP {
+    () => (r#"
+CREATE TABLE IF NOT EXISTS ATAG_TAG (
+  ID INTEGER PRIMARY KEY,
+  UNIQUE_TAG VARCHAR(255) NOT NULL,
+  URL_FROM VARCHAR(1024) NOT NULL,
+  REFERER VARCHAR(1024) NOT NULL,
+  HEADERS CLOB
+)
+"#)}

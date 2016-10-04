@@ -6,6 +6,7 @@ extern crate log;
 extern crate flexi_logger;
 extern crate iron;
 extern crate persistent;
+extern crate rusqlite;
 
 
 use hyper::server::Listening;
@@ -18,6 +19,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 mod server;
+mod db;
 
 fn main() {
     setup_logging();
