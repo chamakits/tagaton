@@ -25,6 +25,17 @@ fn main() {
     setup_logging();
     let http_serv = make_http();
     println!("Hello, world!");
+    {
+        let conn = db::init_db_if_not_exist_and_connect("_SQLITE_DB");
+        db::create_table_if_not_exists(&conn);
+        let tag = "ATAG";
+        let url = "some url";
+        let referer = "some referer";
+        let headers = "some headers";
+        db::insert_log_entry(
+            &conn,
+            &tag, &url, &referer, &headers);
+    }
     http_serv.unwrap();
 }
 

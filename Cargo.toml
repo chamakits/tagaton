@@ -4,8 +4,9 @@ version = "0.1.0"
 authors = ["Omar Ferrer <omar.ferrer.uprm@gmail.com>"]
 
 [dependencies]
-rusqlite = "0.7.3"
+#rusqlite = "0.7.3"
 log = "0.3.6"
+time = "0.1.35"
 flexi_logger = "0.5.0"
 toml = "0.2.1"
 persistent = "0.2.0"
@@ -20,3 +21,7 @@ default-features = true
 version = "0.9.10"
 default-features = false
 
+[dependencies.rusqlite]
+git = "https://github.com/photex/rusqlite.git"
+branch = "master"
+features = ["bundled"]
