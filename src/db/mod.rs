@@ -9,6 +9,8 @@ pub struct DbController {
     pub conn: Connection,
 }
 
+unsafe impl Sync for DbController {}
+
 impl DbController {
     pub fn new(file_path_str: &str) -> DbController {
         let conn = DbController::init_db_if_not_exist_and_connect(file_path_str);

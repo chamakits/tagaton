@@ -1,6 +1,8 @@
 #[macro_use]
 extern crate hyper;
 #[macro_use]
+extern crate lazy_static;
+#[macro_use]
 extern crate log;
 
 extern crate flexi_logger;
@@ -20,6 +22,10 @@ use std::str::FromStr;
 
 mod server;
 mod db;
+
+lazy_static! {
+    static ref DB_CONTROLLER: db::DbController = db::DbController::new("_SQLIT_DB");
+}
 
 fn main() {
     setup_logging();
