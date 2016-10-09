@@ -4,6 +4,8 @@ extern crate hyper;
 extern crate lazy_static;
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate router;
 
 extern crate flexi_logger;
 extern crate iron;
