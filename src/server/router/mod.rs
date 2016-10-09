@@ -1,8 +1,13 @@
 use std::collections::HashMap;
 use iron::{status, Handler};
 use iron::prelude::*;
+use super::super::db;
 
-// Near exact copy of https://github.com/iron/iron/blob/master/examples/simple_routing.rs
+lazy_static! {
+    static ref DB_CONTROLLER: db::DbController = db::DbController::new("_SQLIT_DB");
+}
+
+// Routing done by near exact copy of https://github.com/iron/iron/blob/master/examples/simple_routing.rs
 
 pub struct Router {
     // Routes here are simply matched with the url path.
@@ -22,14 +27,33 @@ impl Router {
         self.add_route("hello".to_string(), |_: &mut Request| {
             Ok(Response::with((status::Ok, "Hello World !")))
         });
+        self.add_route("hello2".to_string(), hello_world);
     }
 }
 
 impl Handler for Router {
     fn handle(&self, req: &mut Request) -> IronResult<Response> {
+        
         match self.routes.get(&req.url.path().join("/")) {
+            
             Some(handler) => handler.handle(req),
             None => Ok(Response::with(status::NotFound))
         }
     }
+}
+
+use time;
+fn hello_world(request: &mut Request) -> IronResult<Response> {
+    let curr_time = time::now();
+    let time_str = format!("{}",curr_time.rfc3339());
+    {
+        let db_conn = db::DbController::new("_SQLITE_DB");
+        let tag = format!("ATAG at {}", time_str);
+        let url = "some url";
+        let referer = "some referer";
+        let headers = "some headers";
+        db_conn.insert_log_entry(
+            &tag, &url, &referer, &headers);
+    }
+    Ok(Response::with((status::Ok, "Hello World2 !")))    
 }

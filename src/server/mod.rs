@@ -8,12 +8,6 @@ use std::str::FromStr;
 
 mod router;
 
-pub fn tag_serve(request: &mut Request) -> IronResult<Response> {
-    //TODO continue here
-    let _req = request;
-    return Ok(Response::with((status::Ok, "Tag thingy")));
-}
-
 pub fn make_http() -> HttpResult<Listening> {
     let any_addr = Ipv4Addr::from_str("0.0.0.0");
 
