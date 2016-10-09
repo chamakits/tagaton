@@ -6,6 +6,7 @@ use std::fs::File;
 use rusqlite::Connection;
 
 pub struct DbController {
+    // This connection is currently kinda useless
     pub conn: Connection,
     pub file_path_string: String
 }
