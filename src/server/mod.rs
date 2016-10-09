@@ -52,10 +52,8 @@ lazy_static! {
 }
 
 fn img_visit(request: &mut Request) -> IronResult<Response> {
-    //response.headers.set(ContentType(Mime(TopLevel::Image, SubLevel::Png, vec![])))
-    //let mut response = Response::with((status::Ok, io::empty() ));
     let mut response = Response::with((status::Ok, "" ));
-    //let mut response = Response::with((status::Ok, Vec::new() ));
+    //TODO figure out how to get this to work
     //let mut response = Response::with((status::Ok, EMPTY_BYTES ));
     response.headers.set(ContentType(Mime(TopLevel::Image, SubLevel::Png, vec![])));
     tagg_visit(request);
