@@ -1,10 +1,13 @@
 use iron::headers as h;
+use iron::mime::{Mime, TopLevel, SubLevel};
+use iron::headers::ContentType;
 use iron::prelude::*;
 use iron::error::HttpResult;
 use iron::{status, Handler};
 use hyper::server::Listening;
 
 use std::net::Ipv4Addr;
+use std::io;
 use std::str::FromStr;
 use router;
 use time;
@@ -30,8 +33,33 @@ pub fn make_http() -> HttpResult<Listening> {
         id_2: get "/do-nothing" => do_nothing,
         id_3: get "/tagg" => tagg_visit,
         id_4: get "/tagg/:uniq-tag" => tagg_visit,
+        id_5: get "/img/:uniq-tag" => img_visit,
     };
     return Iron::new(router).http((any_addr.unwrap(), 8181));
+}
+
+lazy_static! {
+    static ref DB_CONTROLLER: db::DbController = {
+        let mut dbc = db::DbController::new("_SQLITE_DB");
+        dbc
+    };
+    static ref EMPTY_BYTES: Vec<u8> = {
+        let mut v = Vec::new();
+        v
+    };
+    static ref EMPTY_ARR: [u8;0] = [];
+    static ref STR_EMPTY: &'static str = "";
+}
+
+fn img_visit(request: &mut Request) -> IronResult<Response> {
+    //response.headers.set(ContentType(Mime(TopLevel::Image, SubLevel::Png, vec![])))
+    //let mut response = Response::with((status::Ok, io::empty() ));
+    let mut response = Response::with((status::Ok, "" ));
+    //let mut response = Response::with((status::Ok, Vec::new() ));
+    //let mut response = Response::with((status::Ok, EMPTY_BYTES ));
+    response.headers.set(ContentType(Mime(TopLevel::Image, SubLevel::Png, vec![])));
+    tagg_visit(request);
+    Ok(response)
 }
 
 fn tagg_visit(request: &mut Request) -> IronResult<Response> {
@@ -54,12 +82,6 @@ fn tagg_visit(request: &mut Request) -> IronResult<Response> {
     Ok(Response::with((status::Ok, "Tagg")))    
 }
 
-lazy_static! {
-    static ref DB_CONTROLLER: db::DbController = {
-        let mut dbc = db::DbController::new("_SQLITE_DB");
-        dbc
-    };
-}
 
 fn do_nothing(_request: &mut Request) -> IronResult<Response> {
     Ok(Response::with((status::Ok, "did-nothing")))
