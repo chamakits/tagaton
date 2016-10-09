@@ -26,14 +26,12 @@ fn main() {
     let http_serv = make_http();
     println!("Hello, world!");
     {
-        let conn = db::init_db_if_not_exist_and_connect("_SQLITE_DB");
-        db::create_table_if_not_exists(&conn);
+        let db_conn = db::DbController::new("_SQLITE_DB");
         let tag = "ATAG";
         let url = "some url";
         let referer = "some referer";
         let headers = "some headers";
-        db::insert_log_entry(
-            &conn,
+        db_conn.insert_log_entry(
             &tag, &url, &referer, &headers);
     }
     http_serv.unwrap();
