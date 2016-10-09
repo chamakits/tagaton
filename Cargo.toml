@@ -23,5 +23,10 @@ version = "0.9.10"
 default-features = false
 
 [dependencies.rusqlite]
-path = "EXTERNAL_DEPENDENCIES/rusqlite"
+git = "https://github.com/photex/rusqlite.git"
+branch = "master"
 features = ["bundled"]
+
+#[dependencies.rusqlite]
+#path = "EXTERNAL_DEPENDENCIES/rusqlite"
+#features = ["bundled"]

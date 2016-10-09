@@ -14,19 +14,17 @@ unsafe impl Sync for DbController {}
 impl DbController {
     pub fn new(file_path_str: &str) -> DbController {
         let conn = DbController::init_db_if_not_exist_and_connect(file_path_str);
-        DbController::create_table_if_not_exists(&conn);
-        DbController {
-            conn: conn
-        }
-    }
 
-    fn create_table_if_not_exists( conn: &Connection) {
         let create_table_str = format!("{}", CREATE_TAG!());
-        let create_table = conn.execute(&create_table_str, &[]);
+        let create_table = (&conn).execute(&create_table_str, &[]);
         match create_table {
             Ok(_) => debug!("Created table"),
             Err(e) => panic!("Failed badly: {}", e)
         };
+        
+        DbController {
+            conn: conn
+        }
     }
 
     pub fn insert_log_entry(
