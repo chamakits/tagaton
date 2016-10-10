@@ -3,15 +3,13 @@ mod constants;
 
 use std::path::PathBuf;
 use std::fs::File;
-//use rusqlite::Connection;
 use r2d2_sqlite::SqliteConnectionManager;
 use r2d2::ManageConnection;
+use unicase::UniCase;
 
 pub struct DbController {
-    // This connection is currently kinda useless
-    //pub conn: Connection,
     pub conn_manager: SqliteConnectionManager,
-    pub file_path_string: String
+    pub file_path_string: String,
 }
 
 unsafe impl Sync for DbController {}
@@ -32,9 +30,19 @@ impl DbController {
         
         DbController {
             conn_manager: conn_manager,
-            file_path_string: file_path_str.to_string()
+            file_path_string: file_path_str.to_string(),
         }
     }
+
+    fn gen_option_headers() -> Vec<UniCase<String>> {
+        vec![
+            UniCase("X-Requested-With".to_owned()),
+            UniCase("Content-Type".to_owned()),
+            UniCase("Accept".to_owned()),
+            UniCase("Origin".to_owned()),
+        ]
+    }
+
 
     fn init_connection(file_path_str: &str) -> SqliteConnectionManager {
         SqliteConnectionManager::new(file_path_str)

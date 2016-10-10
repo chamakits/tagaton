@@ -112,18 +112,27 @@ struct RefererPost {
     referer: String,
 }
 
-fn setup_options(headers: &mut header::Headers) {
-    headers.set(AccessControlAllowOrigin::Any);
-    //headers.set(AccessControlAllowOrigin::Value("http://localhost:9191".to_string()));
-    //headers.set(AccessControlAllowHeaders(vec![UniCase("date".to_owned())]) );
-    headers.set(AccessControlAllowHeaders(vec![
+fn generate_control_allow_headers() -> Vec<UniCase<String>> {
+    vec![
         UniCase("X-Requested-With".to_owned()),
         UniCase("Content-Type".to_owned()),
         UniCase("Accept".to_owned()),
         UniCase("Origin".to_owned()),
-    ]) );
-    headers.set(AccessControlAllowMethods(vec![
-        Method::Get, Method::Post, Method::Patch, Method::Options]) );
+    ]
+}
+
+fn generate_control_allow_methods() -> Vec<Method> {
+    vec![
+        Method::Get,
+        Method::Post,
+        Method::Patch,
+        Method::Options]
+}
+
+fn setup_options(headers: &mut header::Headers) {
+    headers.set(AccessControlAllowOrigin::Any);
+    headers.set(AccessControlAllowHeaders(generate_control_allow_headers()));
+    headers.set(AccessControlAllowMethods(generate_control_allow_methods()) );
     //headers.set(AccessControlExposeHeaders(vec![
     //    UniCase("etag".to_owned()), UniCase("content-length".to_owned()) ]) );
     headers.set(AccessControlMaxAge(1728000u32));
