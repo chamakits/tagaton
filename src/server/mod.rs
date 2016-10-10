@@ -111,9 +111,11 @@ struct RefererPost {
 fn tagp_visit(request: &mut Request) -> IronResult<Response> {
     let tag_request = TagRequest::new_with_separate_referer(request);
     println!("Tag request: {:?}", tag_request);
-    response.headers.set(AccessControlAllowOrigin::Any);
     insert_to_db(&tag_request);
-    Ok(Response::with((status::Ok, "TAGP")))
+
+    let mut response = Response::with((status::Ok, "TAGP"));
+    response.headers.set(AccessControlAllowOrigin::Any);
+    Ok(response)
 }
 
 fn do_nothing(_request: &mut Request) -> IronResult<Response> {
