@@ -13,6 +13,7 @@ extern crate persistent;
 //extern crate rusqlite;
 extern crate r2d2;
 extern crate r2d2_sqlite;
+extern crate rustc_serialize;
 extern crate time;
 
 mod server;
@@ -26,5 +27,3 @@ fn main() {
     
     http_serv.unwrap();
 }
-
-
