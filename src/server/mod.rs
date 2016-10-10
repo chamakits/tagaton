@@ -6,6 +6,7 @@ use iron::prelude::*;
 use iron::error::HttpResult;
 use iron::status;
 use hyper::server::Listening;
+use hyper::header;
 
 use std::net::Ipv4Addr;
 use std::io::Read;
@@ -111,21 +112,22 @@ struct RefererPost {
     referer: String,
 }
 
+fn setup_options(headers: &mut header::Headers) {
+    headers.set(AccessControlAllowOrigin::Any);
+    headers.set(AccessControlAllowOrigin::Any);
+    headers.set(AccessControlAllowHeaders(vec![UniCase("date".to_owned())]) );
+    headers.set(AccessControlAllowMethods(vec![
+        Method::Get, Method::Post, Method::Patch]) );
+    headers.set(AccessControlExposeHeaders(vec![
+        UniCase("etag".to_owned()), UniCase("content-length".to_owned()) ]) );
+    headers.set(AccessControlMaxAge(1728000u32));
+    headers.set(AccessControlRequestHeaders(vec![UniCase("date".to_owned())]) );
+    headers.set(AccessControlRequestMethod(Method::Post));
+}
+
 fn tagp_option(request: &mut Request) -> IronResult<Response> {
     let mut response = Response::with((status::Ok, "TAGP"));
-    {
-        let mut headers = &mut (response.headers);
-        headers.set(AccessControlAllowOrigin::Any);
-        headers.set(AccessControlAllowOrigin::Any);
-        headers.set(AccessControlAllowHeaders(vec![UniCase("date".to_owned())]) );
-        headers.set(AccessControlAllowMethods(vec![
-            Method::Get, Method::Post, Method::Patch]) );
-        headers.set(AccessControlExposeHeaders(vec![
-            UniCase("etag".to_owned()), UniCase("content-length".to_owned()) ]) );
-        headers.set(AccessControlMaxAge(1728000u32));
-        headers.set(AccessControlRequestHeaders(vec![UniCase("date".to_owned())]) );
-        headers.set(AccessControlRequestMethod(Method::Post));
-    }
+    setup_options(&mut (response.headers));
     Ok(response)
 }
 
@@ -135,7 +137,7 @@ fn tagp_visit(request: &mut Request) -> IronResult<Response> {
     insert_to_db(&tag_request);
 
     let mut response = Response::with((status::Ok, "TAGP"));
-    response.headers.set(AccessControlAllowOrigin::Any);
+    setup_options(&mut (response.headers));
     Ok(response)
 }
 
