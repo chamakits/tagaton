@@ -1,6 +1,7 @@
 use iron::headers as h;
 use iron::mime::{Mime, TopLevel, SubLevel};
-use iron::headers::{ContentType, AccessControlAllowOrigin};
+use iron::method::Method;
+use iron::headers::*;
 use iron::prelude::*;
 use iron::error::HttpResult;
 use iron::status;
@@ -11,6 +12,7 @@ use std::io::Read;
 use std::str::FromStr;
 use router;
 use time;
+use unicase::UniCase;
 
 use super::db;
 
@@ -24,6 +26,7 @@ pub fn make_http() -> HttpResult<Listening> {
         id_4: get "/tagg/:given-tag" => tagg_visit,
         id_5: get "/img/:given-tag" => img_visit,
         id_6: post "/tagp" => tagp_visit,
+        id_7: options "/tagp" => tagp_option,
     };
     return Iron::new(router).http((any_addr.unwrap(), 9292));
 }
@@ -106,6 +109,24 @@ use rustc_serialize::json;
 #[derive(RustcDecodable, RustcEncodable, Debug)]
 struct RefererPost {
     referer: String,
+}
+
+fn tagp_option(request: &mut Request) -> IronResult<Response> {
+    let mut response = Response::with((status::Ok, "TAGP"));
+    {
+        let mut headers = &mut (response.headers);
+        headers.set(AccessControlAllowOrigin::Any);
+        headers.set(AccessControlAllowOrigin::Any);
+        headers.set(AccessControlAllowHeaders(vec![UniCase("date".to_owned())]) );
+        headers.set(AccessControlAllowMethods(vec![
+            Method::Get, Method::Post, Method::Patch]) );
+        headers.set(AccessControlExposeHeaders(vec![
+            UniCase("etag".to_owned()), UniCase("content-length".to_owned()) ]) );
+        headers.set(AccessControlMaxAge(1728000u32));
+        headers.set(AccessControlRequestHeaders(vec![UniCase("date".to_owned())]) );
+        headers.set(AccessControlRequestMethod(Method::Post));
+    }
+    Ok(response)
 }
 
 fn tagp_visit(request: &mut Request) -> IronResult<Response> {

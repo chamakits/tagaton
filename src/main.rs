@@ -15,6 +15,7 @@ extern crate r2d2;
 extern crate r2d2_sqlite;
 extern crate rustc_serialize;
 extern crate time;
+extern crate unicase;
 
 mod server;
 mod db;
