@@ -1,3 +1,6 @@
 [submodule "EXTERNAL_DEPENDENCIES/r2d2-sqlite"]
 	path = EXTERNAL_DEPENDENCIES/r2d2-sqlite
 	url = git@github.com:chamakits/r2d2-sqlite.git
+[submodule "EXTERNAL_DEPENDENCIES/rusqlite"]
+	path = EXTERNAL_DEPENDENCIES/rusqlite
+	url = git@github.com:chamakits/rusqlite.git
