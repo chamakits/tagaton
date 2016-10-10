@@ -12,21 +12,25 @@ toml = "0.2.1"
 persistent = "0.2.0"
 router = "0.4.0"
 lazy_static = "0.1.*"
+r2d2 = "0.7.0"
+#r2d2_sqlite = "0.1.0"
 
 [dependencies.iron]
 version = "0.4.0"
 default-features = true
 #features = ["ssl"]
 
+[dependencies.r2d2_sqlite]
+path = "EXTERNAL_DEPENDENCIES/r2d2-sqlite"
 
 [dependencies.hyper]
 version = "0.9.10"
 default-features = false
 
-[dependencies.rusqlite]
-git = "https://github.com/photex/rusqlite.git"
-branch = "master"
-features = ["bundled"]
+#[dependencies.rusqlite]
+#git = "https://github.com/photex/rusqlite.git"
+#branch = "master"
+#features = ["bundled"]
 
 #[dependencies.rusqlite]
 #path = "EXTERNAL_DEPENDENCIES/rusqlite"

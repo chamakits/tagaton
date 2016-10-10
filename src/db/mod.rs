@@ -3,11 +3,14 @@ mod constants;
 
 use std::path::PathBuf;
 use std::fs::File;
-use rusqlite::Connection;
+//use rusqlite::Connection;
+use r2d2_sqlite::SqliteConnectionManager;
+use r2d2::ManageConnection;
 
 pub struct DbController {
     // This connection is currently kinda useless
-    pub conn: Connection,
+    //pub conn: Connection,
+    pub conn_manager: SqliteConnectionManager,
     pub file_path_string: String
 }
 
@@ -15,8 +18,11 @@ unsafe impl Sync for DbController {}
 
 impl DbController {
     pub fn new(file_path_str: &str) -> DbController {
-        let conn = DbController::init_connection(file_path_str);
-
+        DbController::create_file_if_not_exists(file_path_str);
+        let conn_manager = DbController::init_connection(file_path_str);
+        
+        let conn = (&conn_manager).connect().unwrap();
+        
         let create_table_str = format!("{}", CREATE_TAG!());
         let create_table = (&conn).execute(&create_table_str, &[]);
         match create_table {
@@ -25,13 +31,13 @@ impl DbController {
         };
         
         DbController {
-            conn: conn,
+            conn_manager: conn_manager,
             file_path_string: file_path_str.to_string()
         }
     }
 
-    fn init_connection(file_path_str: &str) -> Connection {
-        DbController::init_db_if_not_exist_and_connect(file_path_str)
+    fn init_connection(file_path_str: &str) -> SqliteConnectionManager {
+        SqliteConnectionManager::new(file_path_str)
     }
 
     pub fn insert_log_entry(
@@ -42,7 +48,9 @@ impl DbController {
         // This is currently unfortunate, as it reopens sqlite connection every time
         // However, without this, it isn't writing safely to sqlite.
         // Fortunately, they are both kinda equally slow. So maybe it isn't a problem?
-        let conn = Connection::open(&self.file_path_string).unwrap();
+        //let conn = Connection::open(&self.file_path_string).unwrap();
+        //let conn = Connection::open(&self.file_path_string).unwrap();
+        let conn = self.conn_manager.connect().unwrap();
 
         let insert_str = format!(
             INSERT_TAG!(),
@@ -63,7 +71,7 @@ impl DbController {
 
     }
 
-    fn init_db_if_not_exist_and_connect(file_path_str: &str) -> Connection {
+    fn create_file_if_not_exists(file_path_str: &str) {
         let file_path = PathBuf::from(file_path_str);
         if !file_path.exists() {
             match File::create(&file_path) {
@@ -71,7 +79,5 @@ impl DbController {
                 Ok(_) => (),
             };
         }
-        let conn = Connection::open(file_path).unwrap();
-        conn
     }
 }

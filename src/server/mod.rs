@@ -51,12 +51,14 @@ lazy_static! {
     static ref STR_EMPTY: &'static str = "";
 }
 
+const EMPTY_STRING: &'static str = "";
+
 fn img_visit(request: &mut Request) -> IronResult<Response> {
-    let mut response = Response::with((status::Ok, "" ));
+    let mut response = Response::with((status::Ok, EMPTY_STRING ));
     //TODO figure out how to get this to work
     //let mut response = Response::with((status::Ok, EMPTY_BYTES ));
     response.headers.set(ContentType(Mime(TopLevel::Image, SubLevel::Png, vec![])));
-    tagg_visit(request);
+    tagg_visit(request).unwrap();
     Ok(response)
 }
 
