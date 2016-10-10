@@ -17,17 +17,6 @@ use super::db;
 pub fn make_http() -> HttpResult<Listening> {
     let any_addr = Ipv4Addr::from_str("0.0.0.0");
 
-    /*
-    let mut router = router::Router::new();
-    router.init();
-    return Iron::new(router).http((any_addr.unwrap(), 8181));
-     */
-
-    /*
-    let mut router = router::Router::new();
-    router.get("/hello2", hello_world);
-     */
-
     let router = router!{
         id_1: get "/hello2" => hello_world,
         id_2: get "/do-nothing" => do_nothing,
@@ -100,13 +89,7 @@ impl TagRequest {
 
 fn tagg_visit(request: &mut Request) -> IronResult<Response> {
     let tag_request = TagRequest::new(request);
-    /*
-    insert_to_db (
-        &tag_request.tag, &tag_request.url,
-        &tag_request.referer, &tag_request.headers);
-     */
     insert_to_db(&tag_request);
-    
     Ok(Response::with((status::Ok, "Tagg")))    
 }
 
@@ -125,12 +108,6 @@ struct RefererPost {
 }
 
 fn tagp_visit(request: &mut Request) -> IronResult<Response> {
-    /*
-    let mut payload = String::new();
-    request.body.read_to_string(&mut payload).unwrap();
-    let referer_post: RefererPost = json::decode(&payload).unwrap();
-    println!("Referer found: {:?}", referer_post);
-     */
     let tag_request = TagRequest::new_with_separate_referer(request);
         println!("Tag request: {:?}", tag_request);
     insert_to_db(&tag_request);
@@ -145,7 +122,6 @@ fn hello_world(_request: &mut Request) -> IronResult<Response> {
     let curr_time = time::now();
     let time_str = format!("{}",curr_time.rfc3339());
     {
-        //let db_conn = db::DbController::new("_SQLITE_DB");
         let db_conn = &DB_CONTROLLER;
         let tag = format!("ATAG at {}", time_str);
         let url = "some url";
