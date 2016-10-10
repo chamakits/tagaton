@@ -41,7 +41,7 @@ fn img_visit(request: &mut Request) -> IronResult<Response> {
     let mut response = Response::with((status::Ok, EMPTY_STRING ));
     //TODO this empty vector gets re-instantiated every time. Fix it.
     response.headers.set(ContentType(Mime(TopLevel::Image, SubLevel::Png, vec![])));
-    response.headers.set(AccessControlAllowOrigin::Any );
+    //response.headers.set(AccessControlAllowOrigin::Any);
     tagg_visit(request).unwrap();
     Ok(response)
 }
@@ -110,7 +110,8 @@ struct RefererPost {
 
 fn tagp_visit(request: &mut Request) -> IronResult<Response> {
     let tag_request = TagRequest::new_with_separate_referer(request);
-        println!("Tag request: {:?}", tag_request);
+    println!("Tag request: {:?}", tag_request);
+    response.headers.set(AccessControlAllowOrigin::Any);
     insert_to_db(&tag_request);
     Ok(Response::with((status::Ok, "TAGP")))
 }
