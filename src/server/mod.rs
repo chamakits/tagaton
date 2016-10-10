@@ -1,6 +1,6 @@
 use iron::headers as h;
 use iron::mime::{Mime, TopLevel, SubLevel};
-use iron::headers::ContentType;
+use iron::headers::{ContentType, AccessControlAllowOrigin};
 use iron::prelude::*;
 use iron::error::HttpResult;
 use iron::status;
@@ -41,6 +41,7 @@ fn img_visit(request: &mut Request) -> IronResult<Response> {
     let mut response = Response::with((status::Ok, EMPTY_STRING ));
     //TODO this empty vector gets re-instantiated every time. Fix it.
     response.headers.set(ContentType(Mime(TopLevel::Image, SubLevel::Png, vec![])));
+    response.headers.set(AccessControlAllowOrigin::Any );
     tagg_visit(request).unwrap();
     Ok(response)
 }
