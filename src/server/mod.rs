@@ -125,6 +125,7 @@ fn setup_options(headers: &mut header::Headers) {
     headers.set(AccessControlRequestMethod(Method::Post));
 }
 
+//TODO still not working. fix.
 fn tagp_option(request: &mut Request) -> IronResult<Response> {
     let mut response = Response::with((status::Ok, "TAGP"));
     setup_options(&mut (response.headers));
