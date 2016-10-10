@@ -26,8 +26,8 @@ pub fn make_http() -> HttpResult<Listening> {
         id_3: get "/tagg" => tagg_visit,
         id_4: get "/tagg/:given-tag" => tagg_visit,
         id_5: get "/img/:given-tag" => img_visit,
-        id_6: post "/tagp" => tagp_visit,
-        id_7: options "/tagp" => tagp_option,
+        id_6: post "/tagp/:given-tag" => tagp_visit,
+        id_7: options "/tagp/:given-tag" => tagp_option,
     };
     return Iron::new(router).http((any_addr.unwrap(), 9292));
 }
@@ -114,12 +114,18 @@ struct RefererPost {
 
 fn setup_options(headers: &mut header::Headers) {
     headers.set(AccessControlAllowOrigin::Any);
-    headers.set(AccessControlAllowOrigin::Any);
-    headers.set(AccessControlAllowHeaders(vec![UniCase("date".to_owned())]) );
+    //headers.set(AccessControlAllowOrigin::Value("http://localhost:9191".to_string()));
+    //headers.set(AccessControlAllowHeaders(vec![UniCase("date".to_owned())]) );
+    headers.set(AccessControlAllowHeaders(vec![
+        UniCase("X-Requested-With".to_owned()),
+        UniCase("Content-Type".to_owned()),
+        UniCase("Accept".to_owned()),
+        UniCase("Origin".to_owned()),
+    ]) );
     headers.set(AccessControlAllowMethods(vec![
-        Method::Get, Method::Post, Method::Patch]) );
-    headers.set(AccessControlExposeHeaders(vec![
-        UniCase("etag".to_owned()), UniCase("content-length".to_owned()) ]) );
+        Method::Get, Method::Post, Method::Patch, Method::Options]) );
+    //headers.set(AccessControlExposeHeaders(vec![
+    //    UniCase("etag".to_owned()), UniCase("content-length".to_owned()) ]) );
     headers.set(AccessControlMaxAge(1728000u32));
     headers.set(AccessControlRequestHeaders(vec![UniCase("date".to_owned())]) );
     headers.set(AccessControlRequestMethod(Method::Post));
@@ -129,6 +135,8 @@ fn setup_options(headers: &mut header::Headers) {
 fn tagp_option(request: &mut Request) -> IronResult<Response> {
     let mut response = Response::with((status::Ok, "TAGP"));
     setup_options(&mut (response.headers));
+    println!("Request: {:?}", request);
+    println!("Response: {:?}", response);
     Ok(response)
 }
 
