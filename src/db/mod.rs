@@ -16,8 +16,8 @@ unsafe impl Sync for DbController {}
 
 impl DbController {
     pub fn new(file_path_str: &str) -> DbController {
-        DbController::create_file_if_not_exists(file_path_str);
-        let conn_manager = DbController::init_connection(file_path_str);
+        create_file_if_not_exists(file_path_str);
+        let conn_manager = init_connection(file_path_str);
         
         let conn = (&conn_manager).connect().unwrap();
         
@@ -28,24 +28,24 @@ impl DbController {
             Err(e) => panic!("Failed badly: {}", e)
         };
         
-        DbController {
+        return DbController {
             conn_manager: conn_manager,
             file_path_string: file_path_str.to_string(),
+        };
+
+        fn create_file_if_not_exists(file_path_str: &str) {
+            let file_path = PathBuf::from(file_path_str);
+            if !file_path.exists() {
+                match File::create(&file_path) {
+                    Err(e) => panic!("Could not create file for db {}", e),
+                    Ok(_) => (),
+                };
+            }
         }
-    }
 
-    fn gen_option_headers() -> Vec<UniCase<String>> {
-        vec![
-            UniCase("X-Requested-With".to_owned()),
-            UniCase("Content-Type".to_owned()),
-            UniCase("Accept".to_owned()),
-            UniCase("Origin".to_owned()),
-        ]
-    }
-
-
-    fn init_connection(file_path_str: &str) -> SqliteConnectionManager {
-        SqliteConnectionManager::new(file_path_str)
+        fn init_connection(file_path_str: &str) -> SqliteConnectionManager {
+            SqliteConnectionManager::new(file_path_str)
+        }
     }
 
     pub fn insert_log_entry(
@@ -79,13 +79,4 @@ impl DbController {
 
     }
 
-    fn create_file_if_not_exists(file_path_str: &str) {
-        let file_path = PathBuf::from(file_path_str);
-        if !file_path.exists() {
-            match File::create(&file_path) {
-                Err(e) => panic!("Could not create file for db {}", e),
-                Ok(_) => (),
-            };
-        }
-    }
 }
