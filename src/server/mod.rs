@@ -133,8 +133,6 @@ fn setup_options(headers: &mut header::Headers) {
     headers.set(AccessControlAllowOrigin::Any);
     headers.set(AccessControlAllowHeaders(generate_control_allow_headers()));
     headers.set(AccessControlAllowMethods(generate_control_allow_methods()) );
-    //headers.set(AccessControlExposeHeaders(vec![
-    //    UniCase("etag".to_owned()), UniCase("content-length".to_owned()) ]) );
     headers.set(AccessControlMaxAge(1728000u32));
     headers.set(AccessControlRequestHeaders(vec![UniCase("date".to_owned())]) );
     headers.set(AccessControlRequestMethod(Method::Post));
