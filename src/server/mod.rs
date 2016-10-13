@@ -195,7 +195,7 @@ fn taglist_visit(request: &mut Request) -> IronResult<Response> {
 
 fn taglist_group_visit(request: &mut Request) -> IronResult<Response> {
     let grouped_tags = tags_grouped();
-    let payload = json::encode(&grouped_tags).unwrap();
+    let payload = format!("{}", json::as_pretty_json(&grouped_tags));
     let mut response = Response::with((status::Ok, payload));
     response.headers.set(ContentType(Mime(TopLevel::Application, SubLevel::Json, vec![])));
     Ok(response)
