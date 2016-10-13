@@ -49,8 +49,8 @@ impl DbController {
     }
 
     pub fn insert_log_entry(
-        &self, unique_tag: &str, url_from: &str,
-        referer: &str, headers: &str) {
+        &self, tag_type: &str, unique_tag: &str,
+        url_from: &str, referer: &str, headers: &str) {
 
         //let conn = (&self.conn);
         // This is currently unfortunate, as it reopens sqlite connection every time
@@ -62,6 +62,7 @@ impl DbController {
 
         let insert_str = format!(
             INSERT_TAG!(),
+            tag_type = tag_type,
             unique_tag = unique_tag,
             url_from = url_from,
             referer = referer,

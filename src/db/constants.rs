@@ -3,6 +3,7 @@ macro_rules! CREATE_TAG {
     () => (r#"
 CREATE TABLE IF NOT EXISTS ATAG_TAG (
   ID INTEGER PRIMARY KEY,
+  TAG_TYPE VARCHAR(255) NOT NULL,
   UNIQUE_TAG VARCHAR(255) NOT NULL,
   URL_FROM VARCHAR(1024) NOT NULL,
   REFERER VARCHAR(1024) NOT NULL,
@@ -15,8 +16,11 @@ CREATE TABLE IF NOT EXISTS ATAG_TAG (
 macro_rules! INSERT_TAG {
     () => (r#"
 INSERT INTO ATAG_TAG (
-  UNIQUE_TAG, URL_FROM, REFERER, HEADERS)
-VALUES('{unique_tag}', '{url_from}', '{referer}', '{headers}')
+  TAG_TYPE, UNIQUE_TAG, URL_FROM, 
+  REFERER, HEADERS)
+VALUES(
+  '{tag_type}', '{unique_tag}', '{url_from}', 
+  '{referer}', '{headers}')
 "#)
 }
 

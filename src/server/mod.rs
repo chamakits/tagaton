@@ -8,6 +8,7 @@ use iron::status;
 use hyper::server::Listening;
 use hyper::header;
 
+use std::fmt;
 use std::net::Ipv4Addr;
 use std::io::Read;
 use std::str::FromStr;
@@ -46,12 +47,28 @@ fn img_visit(request: &mut Request) -> IronResult<Response> {
     //TODO this empty vector gets re-instantiated every time. Fix it.
     response.headers.set(ContentType(Mime(TopLevel::Image, SubLevel::Png, vec![])));
     //response.headers.set(AccessControlAllowOrigin::Any);
-    tagg_visit(request).unwrap();
+    default_visit(request, TagType::ImgGet, EMPTY_STRING).unwrap();
     Ok(response)
 }
 
 #[derive(Debug)]
+pub enum TagType {
+    TagPost,
+    TagGet,
+    ImgGet,
+}
+
+impl fmt::Display for TagType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+        // or, alternatively:
+        // fmt::Debug::fmt(self, f)
+    }
+}
+
+#[derive(Debug)]
 struct TagRequest {
+    tag_type: TagType,
     tag: String,
     url: String,
     referer: String,
@@ -66,7 +83,7 @@ impl TagRequest {
     Even a to_string.  I'm actually going to end up onlyi passing their references anyway
     That leads to tons of string assignments. Might not be necessary.
     **/
-    fn new(request: &Request) -> TagRequest {
+    fn new(request: &Request, tag_type: TagType) -> TagRequest {
         let given_tag = request.extensions.get::<router::Router>();
         let given_tag = given_tag.map(|params| {
             params.find("given-tag").unwrap_or("PARAM BUT NO TAG")
@@ -74,6 +91,7 @@ impl TagRequest {
         let referer = request.headers.get::<h::Referer>();
         let headers = &request.headers;
         TagRequest {
+            tag_type: tag_type,
             tag: given_tag.unwrap_or_else(|| "Router extention missing").to_string(),
             url: format!("{}", request.url),
             referer: format!("{:?}", referer),
@@ -81,25 +99,32 @@ impl TagRequest {
         }
     }
 
-    fn new_with_separate_referer( request: &mut Request) -> TagRequest {
+    fn new_with_separate_referer( request: &mut Request, tag_type: TagType) -> TagRequest {
         let mut payload = String::new();
         request.body.read_to_string(&mut payload).unwrap();
         let referer_post: RefererPost = json::decode(&payload).unwrap();
         //TODO Be less wasteful, double calculating referer cause lazy.
-        let mut tag_request = TagRequest::new(request);
+        let mut tag_request = TagRequest::new(request, tag_type);
         tag_request.referer = referer_post.referer;
         tag_request
     }
 }
 
 fn tagg_visit(request: &mut Request) -> IronResult<Response> {
-    let tag_request = TagRequest::new(request);
+    default_visit(request, TagType::TagGet, "Tagg")
+}
+
+fn default_visit(
+    request: &mut Request, tag_type: TagType,
+    string_return:&'static str) -> IronResult<Response> {
+    let tag_request = TagRequest::new(request, tag_type);
     insert_to_db(&tag_request);
-    Ok(Response::with((status::Ok, "Tagg")))    
+    Ok(Response::with((status::Ok, string_return)))
 }
 
 fn insert_to_db(tag_request: &TagRequest) {
     (&DB_CONTROLLER).insert_log_entry(
+        &tag_request.tag_type.to_string(),
         &tag_request.tag, &tag_request.url,
         &tag_request.referer, &tag_request.headers);
 }
@@ -148,7 +173,7 @@ fn tagp_option(request: &mut Request) -> IronResult<Response> {
 }
 
 fn tagp_visit(request: &mut Request) -> IronResult<Response> {
-    let tag_request = TagRequest::new_with_separate_referer(request);
+    let tag_request = TagRequest::new_with_separate_referer(request, TagType::TagPost);
     println!("Tag request: {:?}", tag_request);
     insert_to_db(&tag_request);
 
@@ -171,6 +196,7 @@ fn hello_world(_request: &mut Request) -> IronResult<Response> {
         let referer = "some referer";
         let headers = "some headers";
         db_conn.insert_log_entry(
+            &TagType::TagGet.to_string(),
             &tag, &url, &referer, &headers);
     }
     Ok(Response::with((status::Ok, "Hello World2 response !")))    
