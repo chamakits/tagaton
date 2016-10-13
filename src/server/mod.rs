@@ -29,6 +29,8 @@ pub fn make_http() -> HttpResult<Listening> {
         id_5: get "/img/:given-tag" => img_visit,
         id_6: post "/tagp/:given-tag" => tagp_visit,
         id_7: options "/tagp/:given-tag" => tagp_option,
+        id_8: get format!("/taglist/all/{KEY}", KEY = "ABCDEF") => taglist_visit,
+        id_9: get format!("/taglist/group/{KEY}", KEY = "ABCDEF") => taglist_group_visit,
     };
     return Iron::new(router).http((any_addr.unwrap(), 9292));
 }
@@ -129,6 +131,10 @@ fn insert_to_db(tag_request: &TagRequest) {
         &tag_request.referer, &tag_request.headers);
 }
 
+fn tags_grouped() -> Vec<db::GroupedTag> {
+    (&DB_CONTROLLER).select_grouped_entries()
+}
+
 use rustc_serialize::json;
 
 //TODO change to serde_json
@@ -180,6 +186,17 @@ fn tagp_visit(request: &mut Request) -> IronResult<Response> {
     let mut response = Response::with((status::Ok, "TAGP"));
     setup_options(&mut (response.headers));
     Ok(response)
+}
+
+fn taglist_visit(request: &mut Request) -> IronResult<Response> {
+    
+    Ok(Response::with((status::Ok, "")))
+}
+
+fn taglist_group_visit(request: &mut Request) -> IronResult<Response> {
+    let grouped_tags = tags_grouped();
+    let payload = json::encode(&grouped_tags).unwrap();
+    Ok(Response::with((status::Ok, payload)))
 }
 
 fn do_nothing(_request: &mut Request) -> IronResult<Response> {

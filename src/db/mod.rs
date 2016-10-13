@@ -5,7 +5,14 @@ use std::path::PathBuf;
 use std::fs::File;
 use r2d2_sqlite::SqliteConnectionManager;
 use r2d2::ManageConnection;
-use unicase::UniCase;
+
+#[derive(RustcDecodable, RustcEncodable, Debug)]
+pub struct GroupedTag {
+    count: i64,
+    tag_type: String,
+    unique_tag: String,
+    referer: String,
+}
 
 pub struct DbController {
     pub conn_manager: SqliteConnectionManager,
@@ -48,6 +55,28 @@ impl DbController {
         }
     }
 
+    pub fn select_grouped_entries(&self) -> Vec<GroupedTag> {
+        let conn = self.conn_manager.connect();
+        let conn = conn.unwrap();
+        let statement = conn.prepare(constants::SELECT_GROUP_TAG);
+        let mut statement = match statement {
+            Ok(stmt) => stmt,
+            Err(e) => {
+                panic!("Failed to select grouped: {}", e);
+            }
+        };
+        let all_res = statement.query_map(&[], |row| {
+            GroupedTag {
+                count: row.get(0),
+                tag_type: row.get(1),
+                unique_tag: row.get(2),
+                referer: row.get(3),
+            }
+        }).unwrap();
+        let iter = all_res.map(|x| x.unwrap());
+        iter.collect::<Vec<GroupedTag>>()
+    }
+    
     pub fn insert_log_entry(
         &self, tag_type: &str, unique_tag: &str,
         url_from: &str, referer: &str, headers: &str) {

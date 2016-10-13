@@ -24,6 +24,24 @@ VALUES(
 "#)
 }
 
+
+pub const SELECT_ALL_TAG: &'static str = r#"
+SELECT
+  ID, TAG_TYPE, UNIQUE_TAG, 
+  URL_FROM, REFERER, HEADERS
+FROM
+  ATAG_TAG
+"#;
+
+pub const SELECT_GROUP_TAG: &'static str = r#"
+SELECT
+  count(*),
+  TAG_TYPE, UNIQUE_TAG, REFERER
+FROM
+  ATAG_TAG
+GROUP BY TAG_TYPE, UNIQUE_TAG, REFERER
+"#;
+
 macro_rules! TMP {
     () => (r#"
 CREATE TABLE IF NOT EXISTS ATAG_TAG (
