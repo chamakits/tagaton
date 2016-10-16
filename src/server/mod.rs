@@ -17,12 +17,16 @@ use rusqlite::Row;
 use time;
 use unicase::UniCase;
 
+use config;
+
 use super::db;
 
 pub fn make_http() -> HttpResult<Listening> {
     let any_addr = Ipv4Addr::from_str("0.0.0.0");
 
-    let router = router!{
+    let ref key = (&CONFIG).sensitive_path_key;
+
+    let router = router! {
         id_1: get "/hello2" => hello_world,
         id_2: get "/do-nothing" => do_nothing,
         id_3: get "/tagg" => tagg_visit,
@@ -30,8 +34,8 @@ pub fn make_http() -> HttpResult<Listening> {
         id_5: get "/img/:given-tag" => img_visit,
         id_6: post "/tagp/:given-tag" => tagp_visit,
         id_7: options "/tagp/:given-tag" => tagp_option,
-        id_8: get format!("/taglist/all/{KEY}", KEY = "ABCDEF") => taglist_visit,
-        id_9: get format!("/taglist/group/{KEY}", KEY = "ABCDEF") => taglist_group_visit,
+        id_8: get format!("/taglist/all/{KEY}", KEY = key) => taglist_visit,
+        id_9: get format!("/taglist/group/{KEY}", KEY = key) => taglist_group_visit,
     };
     return Iron::new(router).http((any_addr.unwrap(), 9292));
 }
@@ -41,12 +45,14 @@ lazy_static! {
         let dbc = db::DbController::new("_SQLITE_DB");
         dbc
     };
+
+    static ref CONFIG: config::Config = config::Config::new();
 }
 
 const EMPTY_STRING: &'static str = "";
 
 fn img_visit(request: &mut Request) -> IronResult<Response> {
-    let mut response = Response::with((status::Ok, EMPTY_STRING ));
+    let mut response = Response::with((status::Ok, EMPTY_STRING));
     //TODO this empty vector gets re-instantiated every time. Fix it.
     response.headers.set(ContentType(Mime(TopLevel::Image, SubLevel::Png, vec![])));
     //response.headers.set(AccessControlAllowOrigin::Any);
@@ -123,7 +129,7 @@ impl TagRequest {
         }
     }
 
-    fn new_with_separate_referer( request: &mut Request, tag_type: TagType) -> TagRequest {
+    fn new_with_separate_referer(request: &mut Request, tag_type: TagType) -> TagRequest {
         let mut payload = String::new();
         request.body.read_to_string(&mut payload).unwrap();
         let referer_post: RefererPost = json::decode(&payload).unwrap();
@@ -134,7 +140,7 @@ impl TagRequest {
     }
 
     pub fn from_row(row: &Row) -> TagRequest {
-        let tag_type:String = row.get(1);
+        let tag_type: String = row.get(1);
         let tag_type = TagType::from_str(&tag_type).unwrap_or(TagType::UNKNOWN);
         TagRequest {
             tag_type: tag_type,
@@ -154,7 +160,7 @@ fn tagg_visit(request: &mut Request) -> IronResult<Response> {
 
 fn default_visit(
     request: &mut Request, tag_type: TagType,
-    string_return:&'static str) -> IronResult<Response> {
+    string_return: &'static str) -> IronResult<Response> {
     let tag_request = TagRequest::new(request, tag_type);
     insert_to_db(&tag_request);
     Ok(Response::with((status::Ok, string_return)))
@@ -190,9 +196,9 @@ struct RefererPost {
 fn setup_options(headers: &mut header::Headers) {
     headers.set(AccessControlAllowOrigin::Any);
     headers.set(AccessControlAllowHeaders(generate_control_allow_headers()));
-    headers.set(AccessControlAllowMethods(generate_control_allow_methods()) );
+    headers.set(AccessControlAllowMethods(generate_control_allow_methods()));
     headers.set(AccessControlMaxAge(1728000u32));
-    headers.set(AccessControlRequestHeaders(vec![UniCase("date".to_owned())]) );
+    headers.set(AccessControlRequestHeaders(vec![UniCase("date".to_owned())]));
     headers.set(AccessControlRequestMethod(Method::Post));
 
     fn generate_control_allow_methods() -> Vec<Method> {
@@ -253,5 +259,5 @@ fn do_nothing(_request: &mut Request) -> IronResult<Response> {
 }
 
 fn hello_world(_request: &mut Request) -> IronResult<Response> {
-    Ok(Response::with((status::Ok, "Hello World2 response !")))    
+    Ok(Response::with((status::Ok, "Hello World2 response !")))
 }
