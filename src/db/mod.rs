@@ -13,6 +13,7 @@ pub struct GroupedTag {
     tag_type: String,
     unique_tag: String,
     referer: String,
+    remote_addr: String
 }
 
 pub struct DbController {
@@ -79,6 +80,7 @@ impl DbController {
                 tag_type: row.get(1),
                 unique_tag: row.get(2),
                 referer: row.get(3),
+                remote_addr: row.get(4)
             }
         };
         self.select_statement(constants::SELECT_GROUP_TAG, function)

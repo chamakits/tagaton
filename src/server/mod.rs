@@ -65,6 +65,8 @@ pub enum TagType {
     TagPost,
     TagGet,
     ImgGet,
+    SeeAllList,
+    SeeGroupList,
     UNKNOWN,
 }
 
@@ -75,6 +77,8 @@ impl FromStr for TagType {
             "TagPost" => Ok(TagType::TagPost),
             "TagGet" => Ok(TagType::TagGet),
             "ImgGet" => Ok(TagType::ImgGet),
+            "SeeAllList" => Ok(TagType::SeeAllList),
+            "SeeGroupList" => Ok(TagType::SeeGroupList),
             _ => Err(()),
         }
     }
@@ -125,7 +129,7 @@ impl TagRequest {
             referer: format!("{:?}", referer),
             headers: format!("{:?}", headers),
             created_at: format!("{}", created_at.rfc3339()),
-            remote_addr: format!("{}", request.remote_addr),
+            remote_addr: format!("{}", request.remote_addr.ip()),
         }
     }
 
@@ -238,7 +242,8 @@ fn tagp_visit(request: &mut Request) -> IronResult<Response> {
     Ok(response)
 }
 
-fn taglist_visit(_request: &mut Request) -> IronResult<Response> {
+fn taglist_visit(request: &mut Request) -> IronResult<Response> {
+    default_visit(request, TagType::SeeAllList, EMPTY_STRING).unwrap();
     let all_tags = tags_all();
     let payload = format!("{}", json::as_pretty_json(&all_tags));
     let mut response = Response::with((status::Ok, payload));
@@ -246,8 +251,9 @@ fn taglist_visit(_request: &mut Request) -> IronResult<Response> {
     Ok(response)
 }
 
-fn taglist_group_visit(_request: &mut Request) -> IronResult<Response> {
+fn taglist_group_visit(request: &mut Request) -> IronResult<Response> {
     let grouped_tags = tags_grouped();
+    default_visit(request, TagType::SeeGroupList, EMPTY_STRING).unwrap();
     let payload = format!("{}", json::as_pretty_json(&grouped_tags));
     let mut response = Response::with((status::Ok, payload));
     response.headers.set(ContentType(Mime(TopLevel::Application, SubLevel::Json, vec![])));
