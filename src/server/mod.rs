@@ -75,6 +75,7 @@ struct TagRequest {
     url: String,
     referer: String,
     headers: String,
+    created_at: String,
 }
 
 // TODO: Consider separating this impl from retrieving so much from the request. Maybe a separate trait or something should be doing that.
@@ -92,12 +93,16 @@ impl TagRequest {
         });
         let referer = request.headers.get::<h::Referer>();
         let headers = &request.headers;
+        let created_at = time::get_time();
+        let created_at = time::at(created_at);
+
         TagRequest {
             tag_type: tag_type,
             tag: given_tag.unwrap_or_else(|| "Router extention missing").to_string(),
             url: format!("{}", request.url),
             referer: format!("{:?}", referer),
             headers: format!("{:?}", headers),
+            created_at: format!("{}", created_at.rfc3339()),
         }
     }
 
@@ -127,8 +132,11 @@ fn default_visit(
 fn insert_to_db(tag_request: &TagRequest) {
     (&DB_CONTROLLER).insert_log_entry(
         &tag_request.tag_type.to_string(),
-        &tag_request.tag, &tag_request.url,
-        &tag_request.referer, &tag_request.headers);
+        &tag_request.tag,
+        &tag_request.url,
+        &tag_request.referer,
+        &tag_request.headers,
+        &tag_request.created_at);
 }
 
 fn tags_grouped() -> Vec<db::GroupedTag> {
@@ -206,17 +214,5 @@ fn do_nothing(_request: &mut Request) -> IronResult<Response> {
 }
 
 fn hello_world(_request: &mut Request) -> IronResult<Response> {
-    let curr_time = time::now();
-    let time_str = format!("{}",curr_time.rfc3339());
-    {
-        let db_conn = &DB_CONTROLLER;
-        let tag = format!("ATAG at {}", time_str);
-        let url = "some url";
-        let referer = "some referer";
-        let headers = "some headers";
-        db_conn.insert_log_entry(
-            &TagType::TagGet.to_string(),
-            &tag, &url, &referer, &headers);
-    }
     Ok(Response::with((status::Ok, "Hello World2 response !")))    
 }
