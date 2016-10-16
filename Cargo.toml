@@ -14,6 +14,8 @@ lazy_static = "0.1.*"
 r2d2 = "0.7.0"
 rustc-serialize = "0.3.19"
 unicase = "1.4.0"
+#rusqlite = "0.7.3"
+#r2d2_sqlite = "0.1.0"
 
 [dependencies.iron]
 version = "0.4.0"
@@ -27,11 +29,6 @@ path = "EXTERNAL_DEPENDENCIES/r2d2-sqlite"
 version = "0.9.10"
 default-features = false
 
-#[dependencies.rusqlite]
-#git = "https://github.com/photex/rusqlite.git"
-#branch = "master"
-#features = ["bundled"]
-
-#[dependencies.rusqlite]
-#path = "EXTERNAL_DEPENDENCIES/rusqlite"
-#features = ["bundled"]
+[dependencies.rusqlite]
+path = "EXTERNAL_DEPENDENCIES/rusqlite"
+features = ["bundled"]

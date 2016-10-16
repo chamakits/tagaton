@@ -10,7 +10,7 @@ extern crate router;
 extern crate flexi_logger;
 extern crate iron;
 extern crate persistent;
-//extern crate rusqlite;
+extern crate rusqlite;
 extern crate r2d2;
 extern crate r2d2_sqlite;
 extern crate rustc_serialize;

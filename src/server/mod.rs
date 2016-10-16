@@ -13,6 +13,7 @@ use std::net::Ipv4Addr;
 use std::io::Read;
 use std::str::FromStr;
 use router;
+use rusqlite::Row;
 use time;
 use unicase::UniCase;
 
@@ -37,7 +38,7 @@ pub fn make_http() -> HttpResult<Listening> {
 
 lazy_static! {
     static ref DB_CONTROLLER: db::DbController = {
-        let mut dbc = db::DbController::new("_SQLITE_DB");
+        let dbc = db::DbController::new("_SQLITE_DB");
         dbc
     };
 }
@@ -53,11 +54,24 @@ fn img_visit(request: &mut Request) -> IronResult<Response> {
     Ok(response)
 }
 
-#[derive(Debug)]
+#[derive(RustcDecodable, RustcEncodable, Debug)]
 pub enum TagType {
     TagPost,
     TagGet,
     ImgGet,
+    UNKNOWN,
+}
+
+impl FromStr for TagType {
+    type Err = ();
+    fn from_str(s: &str) -> Result<TagType, ()> {
+        match s {
+            "TagPost" => Ok(TagType::TagPost),
+            "TagGet" => Ok(TagType::TagGet),
+            "ImgGet" => Ok(TagType::ImgGet),
+            _ => Err(()),
+        }
+    }
 }
 
 impl fmt::Display for TagType {
@@ -68,8 +82,8 @@ impl fmt::Display for TagType {
     }
 }
 
-#[derive(Debug)]
-struct TagRequest {
+#[derive(RustcDecodable, RustcEncodable, Debug)]
+pub struct TagRequest {
     tag_type: TagType,
     tag: String,
     url: String,
@@ -118,6 +132,20 @@ impl TagRequest {
         tag_request.referer = referer_post.referer;
         tag_request
     }
+
+    pub fn from_row(row: &Row) -> TagRequest {
+        let tag_type:String = row.get(1);
+        let tag_type = TagType::from_str(&tag_type).unwrap_or(TagType::UNKNOWN);
+        TagRequest {
+            tag_type: tag_type,
+            tag: row.get(2),
+            url: row.get(3),
+            referer: row.get(4),
+            headers: row.get(5),
+            created_at: row.get(6),
+            remote_addr: row.get(7),
+        }
+    }
 }
 
 fn tagg_visit(request: &mut Request) -> IronResult<Response> {
@@ -141,6 +169,10 @@ fn insert_to_db(tag_request: &TagRequest) {
         &tag_request.headers,
         &tag_request.created_at,
         &tag_request.remote_addr);
+}
+
+fn tags_all() -> Vec<TagRequest> {
+    (&DB_CONTROLLER).select_all_entries()
 }
 
 fn tags_grouped() -> Vec<db::GroupedTag> {
@@ -200,12 +232,15 @@ fn tagp_visit(request: &mut Request) -> IronResult<Response> {
     Ok(response)
 }
 
-fn taglist_visit(request: &mut Request) -> IronResult<Response> {
-    
-    Ok(Response::with((status::Ok, "")))
+fn taglist_visit(_request: &mut Request) -> IronResult<Response> {
+    let all_tags = tags_all();
+    let payload = format!("{}", json::as_pretty_json(&all_tags));
+    let mut response = Response::with((status::Ok, payload));
+    response.headers.set(ContentType(Mime(TopLevel::Application, SubLevel::Json, vec![])));
+    Ok(response)
 }
 
-fn taglist_group_visit(request: &mut Request) -> IronResult<Response> {
+fn taglist_group_visit(_request: &mut Request) -> IronResult<Response> {
     let grouped_tags = tags_grouped();
     let payload = format!("{}", json::as_pretty_json(&grouped_tags));
     let mut response = Response::with((status::Ok, payload));

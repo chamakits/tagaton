@@ -1,10 +1,11 @@
-#[macro_use]
-mod constants;
+#[macro_use] mod constants;
 
 use std::path::PathBuf;
 use std::fs::File;
+use rusqlite::Row;
 use r2d2_sqlite::SqliteConnectionManager;
 use r2d2::ManageConnection;
+use super::server::TagRequest;
 
 #[derive(RustcDecodable, RustcEncodable, Debug)]
 pub struct GroupedTag {
@@ -25,16 +26,16 @@ impl DbController {
     pub fn new(file_path_str: &str) -> DbController {
         create_file_if_not_exists(file_path_str);
         let conn_manager = init_connection(file_path_str);
-        
+
         let conn = (&conn_manager).connect().unwrap();
-        
+
         let create_table_str = format!("{}", CREATE_TAG!());
         let create_table = (&conn).execute(&create_table_str, &[]);
         match create_table {
             Ok(_) => debug!("Created table"),
             Err(e) => panic!("Failed badly: {}", e)
         };
-        
+
         return DbController {
             conn_manager: conn_manager,
             file_path_string: file_path_str.to_string(),
@@ -55,34 +56,43 @@ impl DbController {
         }
     }
 
-    pub fn select_grouped_entries(&self) -> Vec<GroupedTag> {
+    fn select_statement<F, T>(&self, select_statement: &str, f: F) -> Vec<T>
+        where F: FnMut(&Row) -> T {
         let conn = self.conn_manager.connect();
         let conn = conn.unwrap();
-        let statement = conn.prepare(constants::SELECT_GROUP_TAG);
+        let statement = conn.prepare(select_statement);
         let mut statement = match statement {
             Ok(stmt) => stmt,
             Err(e) => {
                 panic!("Failed to select grouped: {}", e);
             }
         };
-        let all_res = statement.query_map(&[], |row| {
+        let all_res = statement.query_map(&[], f).unwrap();
+        let iter = all_res.map(|x| x.unwrap());
+        iter.collect::<Vec<T>>()
+    }
+
+    pub fn select_grouped_entries(&self) -> Vec<GroupedTag> {
+        let function = |row: &Row| {
             GroupedTag {
                 count: row.get(0),
                 tag_type: row.get(1),
                 unique_tag: row.get(2),
                 referer: row.get(3),
             }
-        }).unwrap();
-        let iter = all_res.map(|x| x.unwrap());
-        iter.collect::<Vec<GroupedTag>>()
+        };
+        self.select_statement(constants::SELECT_GROUP_TAG, function)
     }
-    
+
+    pub fn select_all_entries(&self) -> Vec<TagRequest> {
+        self.select_statement(constants::SELECT_ALL_TAG, TagRequest::from_row)
+    }
+
     pub fn insert_log_entry(
         &self,
         tag_type: &str, unique_tag: &str, url_from: &str,
         referer: &str, headers: &str, created_at: &str,
         remote_addr: &str) {
-
         //let conn = (&self.conn);
         // This is currently unfortunate, as it reopens sqlite connection every time
         // However, without this, it isn't writing safely to sqlite.
@@ -110,7 +120,5 @@ impl DbController {
                 panic!("Failed to insert: {}", e);
             }
         };
-
     }
-
 }
