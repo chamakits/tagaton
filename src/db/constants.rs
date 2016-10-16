@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS ATAG_TAG (
   ID INTEGER PRIMARY KEY,
   TAG_TYPE VARCHAR(255) NOT NULL,
   CREATED_AT VARCHAR(512),
+  REMOTE_ADDR VARCHAR(512),
   UNIQUE_TAG VARCHAR(255) NOT NULL,
   URL_FROM VARCHAR(1024) NOT NULL,
   REFERER VARCHAR(1024) NOT NULL,
@@ -17,10 +18,12 @@ CREATE TABLE IF NOT EXISTS ATAG_TAG (
 macro_rules! INSERT_TAG {
     () => (r#"
 INSERT INTO ATAG_TAG (
-  TAG_TYPE, CREATED_AT, UNIQUE_TAG, 
+  TAG_TYPE, CREATED_AT, REMOTE_ADDR,
+  UNIQUE_TAG, 
   URL_FROM, REFERER, HEADERS)
 VALUES(
-  '{tag_type}', '{created_at}', '{unique_tag}', 
+  '{tag_type}', '{created_at}', '{remote_addr}',
+  '{unique_tag}', 
   '{url_from}', '{referer}', '{headers}')
 "#)
 }
@@ -30,7 +33,7 @@ pub const SELECT_ALL_TAG: &'static str = r#"
 SELECT
   ID, TAG_TYPE, UNIQUE_TAG, 
   URL_FROM, REFERER, HEADERS,
-  CREATED_AT
+  CREATED_AT, REMOTE_ADDR
 FROM
   ATAG_TAG
 "#;

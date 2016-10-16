@@ -76,6 +76,7 @@ struct TagRequest {
     referer: String,
     headers: String,
     created_at: String,
+    remote_addr: String,
 }
 
 // TODO: Consider separating this impl from retrieving so much from the request. Maybe a separate trait or something should be doing that.
@@ -93,6 +94,7 @@ impl TagRequest {
         });
         let referer = request.headers.get::<h::Referer>();
         let headers = &request.headers;
+
         let created_at = time::get_time();
         let created_at = time::at(created_at);
 
@@ -103,6 +105,7 @@ impl TagRequest {
             referer: format!("{:?}", referer),
             headers: format!("{:?}", headers),
             created_at: format!("{}", created_at.rfc3339()),
+            remote_addr: format!("{}", request.remote_addr),
         }
     }
 
@@ -136,7 +139,8 @@ fn insert_to_db(tag_request: &TagRequest) {
         &tag_request.url,
         &tag_request.referer,
         &tag_request.headers,
-        &tag_request.created_at);
+        &tag_request.created_at,
+        &tag_request.remote_addr);
 }
 
 fn tags_grouped() -> Vec<db::GroupedTag> {

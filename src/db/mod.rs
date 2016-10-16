@@ -80,7 +80,8 @@ impl DbController {
     pub fn insert_log_entry(
         &self,
         tag_type: &str, unique_tag: &str, url_from: &str,
-        referer: &str, headers: &str, created_at: &str) {
+        referer: &str, headers: &str, created_at: &str,
+        remote_addr: &str) {
 
         //let conn = (&self.conn);
         // This is currently unfortunate, as it reopens sqlite connection every time
@@ -97,7 +98,8 @@ impl DbController {
             url_from = url_from,
             referer = referer,
             headers = headers,
-            created_at = created_at);
+            created_at = created_at,
+            remote_addr = remote_addr);
         let insert_stmt = conn.execute(&insert_str, &[]);
         match insert_stmt {
             Ok(_) => {
