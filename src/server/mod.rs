@@ -12,10 +12,13 @@ use std::fmt;
 use std::net::Ipv4Addr;
 use std::io::Read;
 use std::str::FromStr;
+use std::thread;
+use std::time::Duration;
 use router;
 use rusqlite::Row;
 use time;
 use unicase::UniCase;
+
 
 use config;
 
@@ -37,7 +40,28 @@ pub fn make_http() -> HttpResult<Listening> {
         id_8: get format!("/taglist/all/{KEY}", KEY = key) => taglist_visit,
         id_9: get format!("/taglist/group/{KEY}", KEY = key) => taglist_group_visit,
     };
+    start_inserting_thread();
     return Iron::new(router).http((any_addr.unwrap(), 9292));
+}
+
+pub fn start_inserting_thread() {
+    thread::spawn(move || {
+        let dbc = (&DB_CONTROLLER);
+        loop {
+            thread::sleep(Duration::from_millis(4000));
+            println!("Thread up");
+            for i in 0..1000 {
+                let maybe_tag = dbc.ms_queue.try_pop();
+                println!("Tag:{:?}", &maybe_tag);
+                match maybe_tag {
+                    Some(tag) => dbc.insert_log_to_db(&tag),
+                    None => break,
+                }
+            }
+        }
+    });
+    //        thread_running+1;
+    //        self.running_thread = Some(thread_running);
 }
 
 lazy_static! {
@@ -94,13 +118,13 @@ impl fmt::Display for TagType {
 
 #[derive(RustcDecodable, RustcEncodable, Debug)]
 pub struct TagRequest {
-    tag_type: TagType,
-    tag: String,
-    url: String,
-    referer: String,
-    headers: String,
-    created_at: String,
-    remote_addr: String,
+    pub tag_type: TagType,
+    pub tag: String,
+    pub url: String,
+    pub referer: String,
+    pub headers: String,
+    pub created_at: String,
+    pub remote_addr: String,
 }
 
 // TODO: Consider separating this impl from retrieving so much from the request. Maybe a separate trait or something should be doing that.
@@ -166,12 +190,14 @@ fn default_visit(
     request: &mut Request, tag_type: TagType,
     string_return: &'static str) -> IronResult<Response> {
     let tag_request = TagRequest::new(request, tag_type);
-    insert_to_db(&tag_request);
+    //    insert_to_db(&tag_request);
+    //    (&DB_CONTROLLER).start_inserting_thread();
+    (&DB_CONTROLLER).insert_log_entry(tag_request);
     Ok(Response::with((status::Ok, string_return)))
 }
 
 fn insert_to_db(tag_request: &TagRequest) {
-    (&DB_CONTROLLER).insert_log_entry(
+    (&DB_CONTROLLER).insert_log_entry_OLD(
         &tag_request.tag_type.to_string(),
         &tag_request.tag,
         &tag_request.url,

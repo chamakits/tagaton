@@ -1,5 +1,7 @@
 #[macro_use] mod constants;
 
+use crossbeam::sync::chase_lev::{self, Worker, Stealer};
+use crossbeam::sync::{self, MsQueue};
 use std::fs::File;
 use std::path::PathBuf;
 use rusqlite::Row;
@@ -19,6 +21,9 @@ pub struct GroupedTag {
 pub struct DbController {
     pub conn_manager: SqliteConnectionManager,
     pub file_path_string: String,
+    //    pub worker: Worker<TagRequest>,
+    //    pub stealer: Stealer<TagRequest>,
+    pub ms_queue: MsQueue<TagRequest>,
 }
 
 unsafe impl Sync for DbController {}
@@ -37,9 +42,18 @@ impl DbController {
             Err(e) => panic!("Failed badly: {}", e)
         };
 
+        //        let (mut worker, stealer) = chase_lev::deque();
+        //        return DbController {
+        //            conn_manager: conn_manager,
+        //            file_path_string: file_path_str.to_string(),
+        //            worker :worker,
+        //            stealer: stealer,
+        //        };
+        let ms_queue = MsQueue::new();
         return DbController {
             conn_manager: conn_manager,
             file_path_string: file_path_str.to_string(),
+            ms_queue: ms_queue,
         };
 
         fn create_file_if_not_exists(file_path_str: &str) {
@@ -56,6 +70,25 @@ impl DbController {
             SqliteConnectionManager::new(file_path_str)
         }
     }
+
+    /*
+    pub fn start_inserting_thread(&'static mut self) {
+        thread::spawn(move || {
+            loop {
+                thread::sleep(Duration::from_millis(4000));
+                for i in 0..10 {
+                    let maybe_tag = self.ms_queue.try_pop();
+                    match maybe_tag {
+                        Some(tag) => self.insert_log_to_db(&tag),
+                        None => break,
+                    }
+                }
+            }
+        });
+        //        thread_running+1;
+        //        self.running_thread = Some(thread_running);
+    }
+    */
 
     fn select_statement<F, T>(&self, select_statement: &str, f: F) -> Vec<T>
         where F: FnMut(&Row) -> T {
@@ -92,11 +125,29 @@ impl DbController {
 
     pub fn insert_log_entry(
         &self,
+        tag_request: TagRequest) {
+        self.ms_queue.push(tag_request);
+    }
+
+    pub fn insert_log_to_db(
+        &self,
+        tag_request: &TagRequest) {
+        self.insert_log_entry_OLD(
+            &tag_request.tag_type.to_string(),
+            &tag_request.tag,
+            &tag_request.url,
+            &tag_request.referer,
+            &tag_request.headers,
+            &tag_request.created_at,
+            &tag_request.remote_addr);
+    }
+
+    pub fn insert_log_entry_OLD(
+        &self,
         tag_type: &str, unique_tag: &str, url_from: &str,
         referer: &str, headers: &str, created_at: &str,
         remote_addr: &str) {
         let conn = self.conn_manager.connect().unwrap();
-
         let insert_str = format!(
             INSERT_TAG!(),
             tag_type = tag_type,

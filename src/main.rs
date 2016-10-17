@@ -3,6 +3,7 @@
 #[macro_use] extern crate log;
 #[macro_use] extern crate router;
 
+extern crate crossbeam;
 extern crate flexi_logger;
 extern crate iron;
 extern crate persistent;
