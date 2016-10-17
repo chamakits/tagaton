@@ -2,6 +2,9 @@ language: rust
 rust:
     - nightly
 
+before_script: |
+  sudo apt-get install cmake
+
 script:
     - cargo install cargo-tree
     - cargo tree
