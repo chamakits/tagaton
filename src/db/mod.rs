@@ -95,12 +95,6 @@ impl DbController {
         tag_type: &str, unique_tag: &str, url_from: &str,
         referer: &str, headers: &str, created_at: &str,
         remote_addr: &str) {
-        //let conn = (&self.conn);
-        // This is currently unfortunate, as it reopens sqlite connection every time
-        // However, without this, it isn't writing safely to sqlite.
-        // Fortunately, they are both kinda equally slow. So maybe it isn't a problem?
-        //let conn = Connection::open(&self.file_path_string).unwrap();
-        //let conn = Connection::open(&self.file_path_string).unwrap();
         let conn = self.conn_manager.connect().unwrap();
 
         let insert_str = format!(
