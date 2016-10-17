@@ -1,7 +1,7 @@
 #[macro_use] mod constants;
 
-use std::path::PathBuf;
 use std::fs::File;
+use std::path::PathBuf;
 use rusqlite::Row;
 use r2d2_sqlite::SqliteConnectionManager;
 use r2d2::ManageConnection;
@@ -106,12 +106,14 @@ impl DbController {
         let insert_str = format!(
             INSERT_TAG!(),
             tag_type = tag_type,
-            unique_tag = unique_tag,
-            url_from = url_from,
+            unique_tag = unique_tag.replace("'", "''"),
+            url_from = url_from.replace("'", "''"),
             referer = referer,
-            headers = headers,
+            headers = headers.replace("'", "''"),
             created_at = created_at,
             remote_addr = remote_addr);
+        debug!("insert-string:{}", insert_str);
+
         let insert_stmt = conn.execute(&insert_str, &[]);
         match insert_stmt {
             Ok(_) => {
