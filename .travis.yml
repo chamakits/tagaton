@@ -3,6 +3,8 @@ rust:
     - nightly
 
 script:
+    - cargo install cargo-tree
+    - cargo tree
     - cargo build
 
 after_success: |
