@@ -8,7 +8,7 @@ function sleep_for_time_then_run {
     url="$2"
     time_sleep=$(bc -l <<< "$number_in / 100")
     sleep "$time_sleep"
-    curl -s "$url"
+    curl --retry 10 -s "$url"
 }
 export -f sleep_for_time_then_run
 
