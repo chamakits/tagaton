@@ -1,6 +1,6 @@
 #[macro_use] pub mod constants;
 
-use iron::{Protocol, Timeouts};
+use iron::{Protocol as ironProtocol, Timeouts};
 use iron::headers as h;
 use iron::mime::{Mime, TopLevel, SubLevel};
 use iron::method::Method;
@@ -50,7 +50,7 @@ pub fn make_http() -> HttpResult<Listening> {
     //    return Iron::new(router).http((any_addr.unwrap(), 9292));
     return Iron::new(router)
         .listen_with(
-            (any_addr.unwrap(), 9292), THREAD_COUNT_PER_PROTOCOL, Protocol::Http,
+            (any_addr.unwrap(), 9292), THREAD_COUNT_PER_PROTOCOL, ironProtocol::Http,
             Some(Timeouts::default())
         );
 }
