@@ -38,7 +38,7 @@ impl DbController {
         let create_table = (&conn).execute(&create_table_str, &[]);
         match create_table {
             Ok(_) => debug!("Created table"),
-            Err(e) => panic!("Failed badly: {}", e)
+            Err(e) => panic!("APPLICATION_ERROR: Failed badly: {}", e)
         };
 
         let ms_queue = MsQueue::new();
@@ -71,7 +71,7 @@ impl DbController {
         let mut statement = match statement {
             Ok(stmt) => stmt,
             Err(e) => {
-                panic!("Failed to select grouped: {}", e);
+                panic!("APPLICATION_ERROR: Failed to select grouped: {}", e);
             }
         };
         let all_res = statement.query_map(&[], f).unwrap();
@@ -118,7 +118,7 @@ impl DbController {
 
     fn generic_db_insert(
         &self, insert_str: &str) {
-        println!("generic_db_insert; insert-string: \n{}", insert_str);
+        debug!("generic_db_insert; insert-string: \n{}", insert_str);
         let conn = self.conn_manager.connect().unwrap();
         let insert_stmt = conn.execute(insert_str, &[]);
         match insert_stmt {
@@ -126,8 +126,7 @@ impl DbController {
                 debug!("Inserted!");
             },
             Err(e) => {
-                //error!("Failed to insert: {}", e);
-                panic!("Failed to insert: {}", e);
+                panic!("APPLICATION_ERROR: Failed to insert: {}", e);
             }
         };
     }

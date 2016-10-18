@@ -42,6 +42,7 @@ pub fn make_http() -> HttpResult<Listening> {
         id_7: options "/tagp/:given-tag" => tagp_option,
         id_8: get format!("/taglist/all/{KEY}", KEY = key) => taglist_visit,
         id_9: get format!("/taglist/group/{KEY}", KEY = key) => taglist_group_visit,
+        id_10: get "/*" => do_nothing,
     };
     start_inserting_thread();
     return Iron::new(router).http((any_addr.unwrap(), 9292));
@@ -64,7 +65,7 @@ fn batch_insert() {
     println!("Thread up");
     for i in 0..INSERTS_PER_CYCLE {
         let maybe_tag = dbc.ms_queue.try_pop();
-        println!("inserting tag number {}, Tag:{:?}", i, &maybe_tag);
+        debug!("inserting tag number {}, Tag:{:?}", i, &maybe_tag);
         match maybe_tag {
             Some(tag) => {
                 tags.push(tag);
@@ -273,14 +274,14 @@ fn setup_options(headers: &mut header::Headers) {
 fn tagp_option(request: &mut Request) -> IronResult<Response> {
     let mut response = Response::with((status::Ok, "TAGP"));
     setup_options(&mut (response.headers));
-    println!("Request: {:?}", request);
-    println!("Response: {:?}", response);
+    debug!("Request: {:?}", request);
+    debug!("Response: {:?}", response);
     Ok(response)
 }
 
 fn tagp_visit(request: &mut Request) -> IronResult<Response> {
     let tag_request = TagRequest::new_with_separate_referer(request, TagType::TagPost);
-    println!("Tag request: {:?}", tag_request);
+    debug!("Tag request: {:?}", tag_request);
     (&DB_CONTROLLER).insert_log_entry(tag_request);
 
     let mut response = Response::with((status::Ok, "TAGP"));
