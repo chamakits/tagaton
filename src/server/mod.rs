@@ -56,7 +56,7 @@ pub fn start_inserting_thread() {
     });
 }
 
-const INSERTS_PER_CYCLE: i64 = 1000;
+const INSERTS_PER_CYCLE: i64 = 500;
 
 fn batch_insert() {
     let dbc = &DB_CONTROLLER;
