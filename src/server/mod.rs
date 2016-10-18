@@ -1,3 +1,6 @@
+#[macro_use]
+pub mod constants;
+
 use iron::headers as h;
 use iron::mime::{Mime, TopLevel, SubLevel};
 use iron::method::Method;
@@ -46,22 +49,34 @@ pub fn make_http() -> HttpResult<Listening> {
 
 pub fn start_inserting_thread() {
     thread::spawn(move || {
-        let dbc = (&DB_CONTROLLER);
         loop {
             thread::sleep(Duration::from_millis(4000));
-            println!("Thread up");
-            for i in 0..1000 {
-                let maybe_tag = dbc.ms_queue.try_pop();
-                println!("Tag:{:?}", &maybe_tag);
-                match maybe_tag {
-                    Some(tag) => dbc.insert_log_to_db(&tag),
-                    None => break,
-                }
-            }
+            batch_insert();
         }
     });
-    //        thread_running+1;
-    //        self.running_thread = Some(thread_running);
+}
+
+const INSERTS_PER_CYCLE: i64 = 1000;
+
+fn batch_insert() {
+    let dbc = (&DB_CONTROLLER);
+    let mut tags = vec![];
+    println!("Thread up");
+    for i in 0..INSERTS_PER_CYCLE {
+        let maybe_tag = dbc.ms_queue.try_pop();
+        println!("inserting tag number {}, Tag:{:?}", i, &maybe_tag);
+        match maybe_tag {
+            Some(tag) => {
+//                dbc.insert_log_to_db(&tag)
+                tags.push(tag);
+            },
+            None => break,
+        }
+    }
+    if !tags.is_empty(){
+        dbc.insert_many_log_to_db(tags);
+    }
+
 }
 
 lazy_static! {
@@ -179,6 +194,25 @@ impl TagRequest {
             created_at: row.get(6),
             remote_addr: row.get(7),
         }
+    }
+
+    pub fn log_entry_to_string(
+        &self) -> String {
+        let tag_type = &self.tag_type;
+        let unique_tag = &self.tag;
+        let url_from = &self.url;
+        let referer = &self.referer;
+        let headers = &self.headers;
+        let created_at = &self.created_at;
+        let remote_addr = &self.remote_addr;
+        format!(INSERT_VALUES!(),
+                tag_type = tag_type,
+                unique_tag = unique_tag.replace("'", "''"),
+                url_from = url_from.replace("'", "''"),
+                referer = referer,
+                headers = headers.replace("'", "''"),
+                created_at = created_at,
+                remote_addr = remote_addr)
     }
 }
 

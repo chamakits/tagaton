@@ -28,6 +28,16 @@ VALUES(
 "#)
 }
 
+#[macro_export]
+macro_rules! INSERT_FOR_MULTI_TAG {
+    () => (r#"
+INSERT INTO ATAG_TAG (
+  TAG_TYPE, CREATED_AT, REMOTE_ADDR,
+  UNIQUE_TAG,
+  URL_FROM, REFERER, HEADERS)
+VALUES {multiple_values_str}
+"#)
+}
 
 pub const SELECT_ALL_TAG: &'static str = r#"
 SELECT

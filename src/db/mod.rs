@@ -1,7 +1,6 @@
-#[macro_use] mod constants;
+#[macro_use] pub mod constants;
 
-use crossbeam::sync::chase_lev::{self, Worker, Stealer};
-use crossbeam::sync::{self, MsQueue};
+use crossbeam::sync::MsQueue;
 use std::fs::File;
 use std::path::PathBuf;
 use rusqlite::Row;
@@ -42,13 +41,6 @@ impl DbController {
             Err(e) => panic!("Failed badly: {}", e)
         };
 
-        //        let (mut worker, stealer) = chase_lev::deque();
-        //        return DbController {
-        //            conn_manager: conn_manager,
-        //            file_path_string: file_path_str.to_string(),
-        //            worker :worker,
-        //            stealer: stealer,
-        //        };
         let ms_queue = MsQueue::new();
         return DbController {
             conn_manager: conn_manager,
@@ -70,25 +62,6 @@ impl DbController {
             SqliteConnectionManager::new(file_path_str)
         }
     }
-
-    /*
-    pub fn start_inserting_thread(&'static mut self) {
-        thread::spawn(move || {
-            loop {
-                thread::sleep(Duration::from_millis(4000));
-                for i in 0..10 {
-                    let maybe_tag = self.ms_queue.try_pop();
-                    match maybe_tag {
-                        Some(tag) => self.insert_log_to_db(&tag),
-                        None => break,
-                    }
-                }
-            }
-        });
-        //        thread_running+1;
-        //        self.running_thread = Some(thread_running);
-    }
-    */
 
     fn select_statement<F, T>(&self, select_statement: &str, f: F) -> Vec<T>
         where F: FnMut(&Row) -> T {
@@ -129,6 +102,20 @@ impl DbController {
         self.ms_queue.push(tag_request);
     }
 
+    pub fn insert_many_log_to_db(
+        &self,
+        tag_request_list: Vec<TagRequest>) {
+        let results: Vec<String> = tag_request_list.into_iter()
+            .map(|ref curr: TagRequest| curr.log_entry_to_string())
+            .collect();
+        let to_insert = results.join(", ");
+        let insert_str = format!(
+            INSERT_FOR_MULTI_TAG!(),
+            multiple_values_str = to_insert
+        );
+        self.generic_db_insert(&insert_str);
+    }
+
     pub fn insert_log_to_db(
         &self,
         tag_request: &TagRequest) {
@@ -160,6 +147,22 @@ impl DbController {
         debug!("insert-string:{}", insert_str);
 
         let insert_stmt = conn.execute(&insert_str, &[]);
+        match insert_stmt {
+            Ok(_) => {
+                debug!("Inserted!");
+            },
+            Err(e) => {
+                //error!("Failed to insert: {}", e);
+                panic!("Failed to insert: {}", e);
+            }
+        };
+    }
+
+    fn generic_db_insert(
+        &self, insert_str: &str) {
+        println!("generic_db_insert; insert-string: \n{}", insert_str);
+        let conn = self.conn_manager.connect().unwrap();
+        let insert_stmt = conn.execute(insert_str, &[]);
         match insert_stmt {
             Ok(_) => {
                 debug!("Inserted!");
