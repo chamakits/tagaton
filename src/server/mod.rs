@@ -1,6 +1,6 @@
-#[macro_use]
-pub mod constants;
+#[macro_use] pub mod constants;
 
+use iron::{Protocol, Timeouts};
 use iron::headers as h;
 use iron::mime::{Mime, TopLevel, SubLevel};
 use iron::method::Method;
@@ -27,6 +27,8 @@ use config;
 
 use super::db;
 
+const THREAD_COUNT_PER_PROTOCOL: usize = 128;
+
 pub fn make_http() -> HttpResult<Listening> {
     let any_addr = Ipv4Addr::from_str("0.0.0.0");
 
@@ -45,7 +47,12 @@ pub fn make_http() -> HttpResult<Listening> {
         id_10: get "/*" => do_nothing,
     };
     start_inserting_thread();
-    return Iron::new(router).http((any_addr.unwrap(), 9292));
+    //    return Iron::new(router).http((any_addr.unwrap(), 9292));
+    return Iron::new(router)
+        .listen_with(
+            (any_addr.unwrap(), 9292), THREAD_COUNT_PER_PROTOCOL, Protocol::Http,
+            Some(Timeouts::default())
+        );
 }
 
 pub fn start_inserting_thread() {
@@ -74,10 +81,9 @@ fn batch_insert() {
         }
     }
     info!("Will insert {} tags", tags.len());
-    if !tags.is_empty(){
+    if !tags.is_empty() {
         dbc.insert_many_log_to_db(tags);
     }
-
 }
 
 lazy_static! {
