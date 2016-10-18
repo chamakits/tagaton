@@ -116,48 +116,6 @@ impl DbController {
         self.generic_db_insert(&insert_str);
     }
 
-    pub fn insert_log_to_db(
-        &self,
-        tag_request: &TagRequest) {
-        self.insert_log_entry_OLD(
-            &tag_request.tag_type.to_string(),
-            &tag_request.tag,
-            &tag_request.url,
-            &tag_request.referer,
-            &tag_request.headers,
-            &tag_request.created_at,
-            &tag_request.remote_addr);
-    }
-
-    pub fn insert_log_entry_OLD(
-        &self,
-        tag_type: &str, unique_tag: &str, url_from: &str,
-        referer: &str, headers: &str, created_at: &str,
-        remote_addr: &str) {
-        let conn = self.conn_manager.connect().unwrap();
-        let insert_str = format!(
-            INSERT_TAG!(),
-            tag_type = tag_type,
-            unique_tag = unique_tag.replace("'", "''"),
-            url_from = url_from.replace("'", "''"),
-            referer = referer,
-            headers = headers.replace("'", "''"),
-            created_at = created_at,
-            remote_addr = remote_addr);
-        debug!("insert-string:{}", insert_str);
-
-        let insert_stmt = conn.execute(&insert_str, &[]);
-        match insert_stmt {
-            Ok(_) => {
-                debug!("Inserted!");
-            },
-            Err(e) => {
-                //error!("Failed to insert: {}", e);
-                panic!("Failed to insert: {}", e);
-            }
-        };
-    }
-
     fn generic_db_insert(
         &self, insert_str: &str) {
         println!("generic_db_insert; insert-string: \n{}", insert_str);

@@ -59,7 +59,7 @@ pub fn start_inserting_thread() {
 const INSERTS_PER_CYCLE: i64 = 1000;
 
 fn batch_insert() {
-    let dbc = (&DB_CONTROLLER);
+    let dbc = &DB_CONTROLLER;
     let mut tags = vec![];
     println!("Thread up");
     for i in 0..INSERTS_PER_CYCLE {
@@ -67,7 +67,6 @@ fn batch_insert() {
         println!("inserting tag number {}, Tag:{:?}", i, &maybe_tag);
         match maybe_tag {
             Some(tag) => {
-//                dbc.insert_log_to_db(&tag)
                 tags.push(tag);
             },
             None => break,
@@ -224,21 +223,8 @@ fn default_visit(
     request: &mut Request, tag_type: TagType,
     string_return: &'static str) -> IronResult<Response> {
     let tag_request = TagRequest::new(request, tag_type);
-    //    insert_to_db(&tag_request);
-    //    (&DB_CONTROLLER).start_inserting_thread();
     (&DB_CONTROLLER).insert_log_entry(tag_request);
     Ok(Response::with((status::Ok, string_return)))
-}
-
-fn insert_to_db(tag_request: &TagRequest) {
-    (&DB_CONTROLLER).insert_log_entry_OLD(
-        &tag_request.tag_type.to_string(),
-        &tag_request.tag,
-        &tag_request.url,
-        &tag_request.referer,
-        &tag_request.headers,
-        &tag_request.created_at,
-        &tag_request.remote_addr);
 }
 
 fn tags_all() -> Vec<TagRequest> {
@@ -295,7 +281,7 @@ fn tagp_option(request: &mut Request) -> IronResult<Response> {
 fn tagp_visit(request: &mut Request) -> IronResult<Response> {
     let tag_request = TagRequest::new_with_separate_referer(request, TagType::TagPost);
     println!("Tag request: {:?}", tag_request);
-    insert_to_db(&tag_request);
+    (&DB_CONTROLLER).insert_log_entry(tag_request);
 
     let mut response = Response::with((status::Ok, "TAGP"));
     setup_options(&mut (response.headers));
