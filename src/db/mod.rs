@@ -1,6 +1,7 @@
 #[macro_use] pub mod constants;
 
-use crossbeam::sync::MsQueue;
+//use crossbeam::sync::MsQueue;
+    use crossbeam::sync::SegQueue;
 use std::fs::File;
 use std::path::PathBuf;
 use rusqlite::Row;
@@ -22,7 +23,7 @@ pub struct DbController {
     pub file_path_string: String,
     //    pub worker: Worker<TagRequest>,
     //    pub stealer: Stealer<TagRequest>,
-    pub ms_queue: MsQueue<TagRequest>,
+    pub ms_queue: SegQueue<TagRequest>,
 }
 
 unsafe impl Sync for DbController {}
@@ -41,7 +42,7 @@ impl DbController {
             Err(e) => panic!("APPLICATION_ERROR: Failed badly: {}", e)
         };
 
-        let ms_queue = MsQueue::new();
+        let ms_queue = SegQueue::new();
         return DbController {
             conn_manager: conn_manager,
             file_path_string: file_path_str.to_string(),
@@ -99,6 +100,7 @@ impl DbController {
     pub fn insert_log_entry(
         &self,
         tag_request: TagRequest) {
+        info!("About to insert to queue");
         self.ms_queue.push(tag_request);
     }
 

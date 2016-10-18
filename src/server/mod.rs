@@ -73,6 +73,7 @@ fn batch_insert() {
             None => break,
         }
     }
+    info!("Will insert {} tags", tags.len());
     if !tags.is_empty(){
         dbc.insert_many_log_to_db(tags);
     }
