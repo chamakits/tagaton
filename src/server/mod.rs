@@ -334,7 +334,6 @@ fn taglist_group_visit(request: &mut Request) -> IronResult<Response> {
 
 fn taglist_search_visit(request: &mut Request) -> IronResult<Response> {
     let params_map = request.get_ref::<Params>().unwrap();
-    println!("{:?}", params_map);
     let &pMap(ref params_as_map) = params_map;
 
     let selected_tags = tags_whered(params_as_map);

@@ -119,8 +119,6 @@ impl DbController {
         -> Vec<String>
     {
         let mut where_entries = vec![];
-        println!("param_to_column_name: {:?}", param_to_column_value);
-        println!("db_param_name_column_values_map: {:?}", param_name_to_column_name);
         for (param_name, column_name) in param_name_to_column_name.iter() {
             if let Some(column_value) = param_to_column_value.get(param_name) {
                 where_entries.push(format!("{} = '{}'", column_name, column_value));

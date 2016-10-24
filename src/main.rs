@@ -24,7 +24,7 @@ mod config;
 fn main() {
     my_log::setup_logging();
     let http_serv = server::make_http();
-    println!("Hello, world!");
+    println!("Server up!");
 
     http_serv.unwrap();
 }
