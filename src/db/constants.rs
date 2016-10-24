@@ -39,6 +39,19 @@ VALUES {multiple_values_str}
 "#)
 }
 
+#[macro_export]
+macro_rules! SELECT_WITH_WHERE_TAG {
+    () => (r#"
+SELECT
+  ID, TAG_TYPE, UNIQUE_TAG,
+  URL_FROM, REFERER, HEADERS,
+  CREATED_AT, REMOTE_ADDR
+FROM
+  ATAG_TAG
+WHERE
+    {multi_where_statement}
+"#)}
+
 pub const SELECT_ALL_TAG: &'static str = r#"
 SELECT
   ID, TAG_TYPE, UNIQUE_TAG, 

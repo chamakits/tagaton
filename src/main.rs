@@ -14,6 +14,7 @@ extern crate rustc_serialize;
 extern crate time;
 extern crate toml;
 extern crate unicase;
+extern crate params;
 
 mod server;
 mod db;

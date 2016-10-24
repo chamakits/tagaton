@@ -11,6 +11,8 @@ use iron::status;
 use hyper::server::Listening;
 use hyper::header;
 
+use params::{Map as pMap, Params, Value};
+use std::collections::BTreeMap;
 use std::fmt;
 use std::net::Ipv4Addr;
 use std::io::Read;
@@ -21,10 +23,7 @@ use router;
 use rusqlite::Row;
 use time;
 use unicase::UniCase;
-
-
 use config;
-
 use super::db;
 
 const THREAD_COUNT_PER_PROTOCOL: usize = 128;
@@ -44,7 +43,8 @@ pub fn make_http() -> HttpResult<Listening> {
         id_7: options "/tagp/:given-tag" => tagp_option,
         id_8: get format!("/taglist/all/{KEY}", KEY = key) => taglist_visit,
         id_9: get format!("/taglist/group/{KEY}", KEY = key) => taglist_group_visit,
-        id_10: get "/*" => do_nothing,
+        id_10: get format!("/taglist/search/{KEY}", KEY = key) => taglist_search_visit,
+        id_nothing: get "/*" => do_nothing,
     };
     start_inserting_thread();
     //    return Iron::new(router).http((any_addr.unwrap(), 9292));
@@ -243,6 +243,24 @@ fn tags_grouped() -> Vec<db::GroupedTag> {
     (&DB_CONTROLLER).select_grouped_entries()
 }
 
+fn tags_whered(params_map: &BTreeMap<String, Value>) -> Vec<TagRequest> {
+    let param_to_column_value: BTreeMap<String, String> = column_map(params_map);
+    (&DB_CONTROLLER).select_where_entries(param_to_column_value)
+}
+
+fn column_map(params_map: &BTreeMap<String, Value>) -> BTreeMap<String, String> {
+    let mut db_param_name_column_values_map = BTreeMap::new();
+    for (param_name, param_value) in params_map.iter() {
+        match param_value {
+            &Value::String(ref param_as_str) => {
+                db_param_name_column_values_map.insert(param_name.to_owned(), param_as_str.to_owned());
+            }
+            _ => {}
+        }
+    }
+    db_param_name_column_values_map
+}
+
 use rustc_serialize::json;
 
 //TODO change to serde_json
@@ -309,6 +327,18 @@ fn taglist_group_visit(request: &mut Request) -> IronResult<Response> {
     let grouped_tags = tags_grouped();
     default_visit(request, TagType::SeeGroupList, EMPTY_STRING).unwrap();
     let payload = format!("{}", json::as_pretty_json(&grouped_tags));
+    let mut response = Response::with((status::Ok, payload));
+    response.headers.set(ContentType(Mime(TopLevel::Application, SubLevel::Json, vec![])));
+    Ok(response)
+}
+
+fn taglist_search_visit(request: &mut Request) -> IronResult<Response> {
+    let params_map = request.get_ref::<Params>().unwrap();
+    println!("{:?}", params_map);
+    let &pMap(ref params_as_map) = params_map;
+
+    let selected_tags = tags_whered(params_as_map);
+    let payload = format!("{}", json::as_pretty_json(&selected_tags));
     let mut response = Response::with((status::Ok, payload));
     response.headers.set(ContentType(Mime(TopLevel::Application, SubLevel::Json, vec![])));
     Ok(response)

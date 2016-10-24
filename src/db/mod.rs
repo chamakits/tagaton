@@ -1,7 +1,8 @@
 #[macro_use] pub mod constants;
 
 //use crossbeam::sync::MsQueue;
-    use crossbeam::sync::SegQueue;
+use crossbeam::sync::SegQueue;
+use std::collections::BTreeMap;
 use std::fs::File;
 use std::path::PathBuf;
 use rusqlite::Row;
@@ -24,9 +25,8 @@ pub struct DbController {
     //    pub worker: Worker<TagRequest>,
     //    pub stealer: Stealer<TagRequest>,
     pub ms_queue: SegQueue<TagRequest>,
+    param_name_to_column_name: BTreeMap<String, String>,
 }
-
-unsafe impl Sync for DbController {}
 
 impl DbController {
     pub fn new(file_path_str: &str) -> DbController {
@@ -47,7 +47,27 @@ impl DbController {
             conn_manager: conn_manager,
             file_path_string: file_path_str.to_string(),
             ms_queue: ms_queue,
+            param_name_to_column_name: init_columns_wanted(),
         };
+
+        fn init_columns_wanted() -> BTreeMap<String, String> {
+            let mut param_to_column_name = BTreeMap::new();
+
+            insert(&mut param_to_column_name, "tag_type", "TAG_TYPE");
+            insert(&mut param_to_column_name, "remote_addr", "REMOTE_ADDR");
+            insert(&mut param_to_column_name, "unique_tag", "UNIQUE_TAG");
+            insert(&mut param_to_column_name, "url_from", "URL_FROM");
+            insert(&mut param_to_column_name, "referer", "REFERER");
+
+            return param_to_column_name;
+
+            fn insert<'a>(map: &'a mut BTreeMap<String, String>, key: &'static str, value: &'static str)
+                -> &'a BTreeMap<String, String>
+            {
+                map.insert(key.to_owned(), value.to_owned());
+                map
+            }
+        }
 
         fn create_file_if_not_exists(file_path_str: &str) {
             let file_path = PathBuf::from(file_path_str);
@@ -78,6 +98,35 @@ impl DbController {
         let all_res = statement.query_map(&[], f).unwrap();
         let iter = all_res.map(|x| x.unwrap());
         iter.collect::<Vec<T>>()
+    }
+
+    pub fn select_where_entries(
+        &self, param_to_column_value: BTreeMap<String, String>) -> Vec<TagRequest>
+    {
+        let ref param_name_to_column_name = self.param_name_to_column_name;
+        let where_entries = DbController::generate_where_entries(
+            &param_to_column_value, &param_name_to_column_name);
+        let where_string = where_entries.join(" AND ");
+        let query_with_where = format!(
+            SELECT_WITH_WHERE_TAG!(),
+            multi_where_statement = where_string);
+        self.select_statement(&query_with_where, TagRequest::from_row)
+    }
+
+    fn generate_where_entries(
+        param_to_column_value: &BTreeMap<String, String>,
+        param_name_to_column_name: &BTreeMap<String, String>)
+        -> Vec<String>
+    {
+        let mut where_entries = vec![];
+        println!("param_to_column_name: {:?}", param_to_column_value);
+        println!("db_param_name_column_values_map: {:?}", param_name_to_column_name);
+        for (param_name, column_name) in param_name_to_column_name.iter() {
+            if let Some(column_value) = param_to_column_value.get(param_name) {
+                where_entries.push(format!("{} = '{}'", column_name, column_value));
+            };
+        }
+        where_entries
     }
 
     pub fn select_grouped_entries(&self) -> Vec<GroupedTag> {
