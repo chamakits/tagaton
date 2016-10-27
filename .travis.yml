@@ -6,6 +6,11 @@ rust:
 
 before_script: |
   sudo apt-get install cmake
+  curl -O http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz
+  gunzip GeoLite2-City.mmdb.gz
+  pwd
+  ls
+  mv GeoLite2-City.mmdb ~/GeoLite2-City.mmdb
 
 script:
     - cargo install cargo-tree
